@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+  * { margin:0; padding:0; box-sizing: border-box; font-family: Georgia, serif; }
+  body { background:#fff; }
+  .cert {
+    width: 1400px; height: 990px; position: relative;
+    background: #FFFDF8;
+    border: 14px solid #1B3A6B;
+    padding: 40px;
+  }
+  .corner-logo {
+  position:absolute; top:24px; left:24px; width:44px; height:44px; border-radius:10px;
+  background:#1B3A6B; color:#fff; display:flex; align-items:center; justify-content:center;
+  font-family:Arial,sans-serif; font-weight:800; font-size:15px;
+}
+  .inner-border {
+    position:absolute; top: 40px; left:40px; right:40px; bottom:40px;
+    border: 2px solid #17A398;
+  }
+  .content {
+    position: relative; height:100%; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; text-align:center; padding: 60px;
+  }
+  .badge {
+    width: 90px; height:90px; border-radius:50%; background:#17A398;
+    display:flex; align-items:center; justify-content:center; margin-bottom: 24px;
+  }
+  .badge span { color:#fff; font-size: 40px; }
+  .cert-label {
+    letter-spacing: 6px; color:#94A3B8; font-size: 16px; font-family: Arial, sans-serif;
+    margin-bottom: 12px;
+  }
+  .cert-title {
+    font-size: 52px; color:#1B3A6B; font-weight:700; margin-bottom: 30px;
+  }
+  .presented {
+    font-family: Arial, sans-serif; font-size: 16px; color:#64748B; margin-bottom: 10px;
+  }
+  .name {
+    font-size: 44px; color:#17A398; font-weight:700; border-bottom: 2px solid #E2E8F0;
+    padding-bottom: 14px; margin-bottom: 24px; min-width: 500px;
+  }
+  .desc {
+    font-family: Arial, sans-serif; font-size: 16px; color:#475569; max-width: 700px;
+    line-height: 1.6; margin-bottom: 40px;
+  }
+  .desc b { color:#1B3A6B; }
+  .footer {
+    display:flex; justify-content: space-between; width: 100%; max-width: 800px;
+    margin-top: 30px; font-family: Arial, sans-serif;
+  }
+  .footer-item { text-align:center; }
+  .footer-line { width: 200px; border-top: 1.5px solid #94A3B8; margin-bottom: 8px; }
+  .footer-label { font-size: 13px; color:#94A3B8; }
+  .footer-value { font-size: 14px; color:#1B3A6B; font-weight:700; margin-bottom: 6px; }
+</style>
+</head>
+<body>
+<div class="cert">
+  <div class="inner-border"></div>
+  <div class="content">
+    <div class="badge"><span>&#10003;</span></div>
+    <div class="corner-logo">EC</div>
+    <div class="cert-title">Certificate of Participation</div>
+    <div class="presented">This certificate is proudly presented to</div>
+    <div class="name">{{name}}</div>
+    <div class="desc">for successfully participating in <b>{{eventName}}</b>,<br>held on <b>{{date}}</b> at {{venue}}.</div>
+    <div class="footer">
+      <div class="footer-item">
+        <div class="footer-value">{{date}}</div>
+        <div class="footer-line"></div>
+        <div class="footer-label">DATE</div>
+      </div>
+      <div class="footer-item">
+        <div class="footer-value">{{certId}}</div>
+        <div class="footer-line"></div>
+        <div class="footer-label">CERTIFICATE ID</div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

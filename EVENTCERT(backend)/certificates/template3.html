@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+  * { margin:0; padding:0; box-sizing: border-box; font-family: Georgia, serif; }
+  body { background:#fff; }
+  .cert { width: 1400px; height: 990px; position: relative; background: #FEFCF6; padding: 30px; }
+  .corner-logo {
+  position:absolute; top:24px; left:24px; width:44px; height:44px; border-radius:10px;
+  background:#A8791F; color:#fff; display:flex; align-items:center; justify-content:center;
+  font-family:Arial,sans-serif; font-weight:800; font-size:15px;
+}
+.outer-border { position:absolute; top:26px; left:26px; right:26px; bottom:26px; border: 3px double #A8791F; }
+  .inner-border { position:absolute; top:42px; left:42px; right:42px; bottom:42px; border: 1px solid #A8791F; }
+  .content { position:relative; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding: 70px; }
+  .crest { width: 80px; height:80px; border-radius:50%; border: 2px solid #A8791F; display:flex; align-items:center; justify-content:center; margin-bottom:22px; }
+  .crest span { color:#A8791F; font-size: 36px; }
+  .top-label { font-size: 14px; color:#A8791F; letter-spacing: 5px; margin-bottom: 6px; }
+  .cert-title { font-size: 50px; color:#2C2416; font-weight:bold; margin-bottom: 6px; font-style: italic; }
+  .divider { width: 120px; height: 2px; background:#A8791F; margin: 22px 0; }
+  .presented { font-size: 15px; color:#78716C; margin-bottom: 12px; letter-spacing:1px; }
+  .name { font-size: 46px; color:#2C2416; font-weight:bold; font-style:italic; margin-bottom: 26px; }
+  .desc { font-size: 16px; color:#57534E; max-width: 720px; line-height:1.8; margin-bottom: 44px; font-family: Arial, sans-serif; }
+  .desc b { color:#A8791F; }
+  .footer { display:flex; justify-content:space-between; width:100%; max-width: 760px; font-family: Arial, sans-serif; }
+  .footer-value { font-size: 14px; color:#2C2416; font-weight:bold; margin-bottom:6px; }
+  .footer-line { width: 190px; border-top: 1px solid #A8791F; margin-bottom:8px; }
+  .footer-label { font-size: 11px; color:#A8A29E; letter-spacing:2px; }
+</style>
+</head>
+<body>
+<div class="cert">
+  <div class="outer-border"></div>
+  <div class="inner-border"></div>
+  <div class="content">
+    <div class="crest"><span>&#9733;</span></div>
+   <div class="corner-logo">EC</div>
+    <div class="cert-title">Certificate of Excellence</div>
+    <div class="divider"></div>
+    <div class="presented">THIS CERTIFICATE IS PROUDLY PRESENTED TO</div>
+    <div class="name">{{name}}</div>
+    <div class="desc">In recognition of dedicated participation in <b>{{eventName}}</b>,<br>held on <b>{{date}}</b> at {{venue}}.</div>
+    <div class="footer">
+      <div><div class="footer-value">{{date}}</div><div class="footer-line"></div><div class="footer-label">DATE</div></div>
+      <div><div class="footer-value">{{certId}}</div><div class="footer-line"></div><div class="footer-label">CERTIFICATE ID</div></div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

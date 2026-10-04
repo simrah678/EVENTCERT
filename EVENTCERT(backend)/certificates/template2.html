@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+  * { margin:0; padding:0; box-sizing: border-box; }
+  body { background:#fff; font-family: Arial, sans-serif; }
+  .corner-logo {
+  position:absolute; top:24px; left:24px; width:44px; height:44px; border-radius:10px;
+  background:#D85A30; color:#fff; display:flex; align-items:center; justify-content:center;
+  font-family:Arial,sans-serif; font-weight:800; font-size:15px;
+}
+.cert { width: 1400px; height: 990px; position: relative; background: #fff; display:flex; }
+  .side { width: 260px; background: linear-gradient(180deg, #D85A30, #993C1D); display:flex; flex-direction:column; align-items:center; justify-content:center; padding: 40px; }
+  .side-badge { width: 100px; height:100px; border-radius:50%; background:rgba(255,255,255,0.15); display:flex; align-items:center; justify-content:center; margin-bottom:20px; border: 2px solid rgba(255,255,255,0.5); }
+  .side-badge span { color:#fff; font-size: 44px; font-weight:bold; }
+  .side-text { color:#fff; font-size: 15px; text-align:center; letter-spacing:2px; font-weight:bold; }
+  .main { flex:1; padding: 90px 80px; display:flex; flex-direction:column; justify-content:center; }
+  .cert-label { color:#D85A30; font-size: 15px; letter-spacing:4px; font-weight:bold; margin-bottom:14px; }
+  .cert-title { font-size: 46px; color:#1E1B18; font-weight:800; margin-bottom: 26px; line-height:1.2; }
+  .presented { font-size: 16px; color:#78716C; margin-bottom:8px; }
+  .name { font-size: 42px; color:#1E1B18; font-weight:800; margin-bottom: 22px; }
+  .desc { font-size: 16px; color:#57534E; max-width:750px; line-height:1.7; margin-bottom: 50px; }
+  .desc b { color:#D85A30; }
+  .footer { display:flex; gap: 70px; }
+  .footer-value { font-size: 15px; color:#1E1B18; font-weight:800; margin-bottom:6px; }
+  .footer-line { width: 180px; border-top: 2px solid #D85A30; margin-bottom:8px; }
+  .footer-label { font-size: 12px; color:#A8A29E; letter-spacing:1.5px; }
+</style>
+</head>
+<body>
+<div class="cert">
+  <div class="side">
+    <div class="side-badge"><span>&#10003;</span></div>
+    <div class="side-text">CERTIFICATE<br>OF PARTICIPATION</div>
+  </div>
+  <div class="main">
+    <div class="corner-logo">EC</div>
+    <div class="cert-title">Certificate of<br>Participation</div>
+    <div class="presented">This certificate is proudly presented to</div>
+    <div class="name">{{name}}</div>
+    <div class="desc">for successfully participating in <b>{{eventName}}</b>, held on <b>{{date}}</b> at {{venue}}.</div>
+    <div class="footer">
+      <div><div class="footer-value">{{date}}</div><div class="footer-line"></div><div class="footer-label">DATE</div></div>
+      <div><div class="footer-value">{{certId}}</div><div class="footer-line"></div><div class="footer-label">CERTIFICATE ID</div></div>
+    </div>
+  </div>
+</div>
+</body>
+</html>
