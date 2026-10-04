@@ -4,12 +4,27 @@ import certificateGirl from "./assets/certificate-girl.png";
 import "./App.css";
 import * as XLSX from "xlsx";
 
-const API = "http://localhost:3000";
+const API = "https://eventcert-6opf.onrender.com";
 
 function App() {
   const [page, setPage] = useState("home");
+  const [sharedEvent, setSharedEvent] = useState(null);
+  const [createdEventLink, setCreatedEventLink] = useState("");
+  const [notification, setNotification] = useState(null);
+  const showNotification = (message, type = "success") => {
+  setNotification({
+    message,
+    type
+  });
+
+  setTimeout(() => {
+    setNotification(null);
+  }, 3000);
+};
   const [profileOpen, setProfileOpen] = useState(false);
   const [managementOpen, setManagementOpen] = useState(false);
+  const [userSearch, setUserSearch] = useState("");
+const [userRoleFilter, setUserRoleFilter] = useState("all");
   const [user, setUser] = useState(
     JSON.parse(localStorage.getItem("eventcertUser")) || null
   );
@@ -49,9 +64,30 @@ const [attendanceFilter, setAttendanceFilter] = useState("all");
     certificateTemplate: "template1"
   });
 
-  useEffect(() => {
-    getEvents();
-  }, []);
+ useEffect(() => {
+  getEvents();
+
+  const params = new URLSearchParams(window.location.search);
+  const eventId = params.get("event");
+
+  if (eventId) {
+    setSharedEvent(eventId);
+  }
+}, []);
+useEffect(() => {
+  if (!sharedEvent || events.length === 0) {
+    return;
+  }
+
+  const foundEvent = events.find(
+    (item) => item._id === sharedEvent
+  );
+
+  if (foundEvent) {
+    setSelectedEvent(foundEvent);
+    setPage("events");
+  }
+}, [sharedEvent, events]);
 
   async function getEvents() {
   try {
@@ -88,13 +124,13 @@ const [attendanceFilter, setAttendanceFilter] = useState("all");
       const data = await response.json();
 
       if (response.ok) {
-        alert("Registration successful!");
+        showNotification("Registration successful!");
         setPage("login");
       } else {
-        alert(data.message);
+         showNotification(data.message,"error");
       }
     } catch {
-      alert("Cannot connect to backend.");
+      showNotification("Cannot connect to backend.","error");
     }
   }
 
@@ -111,7 +147,7 @@ const [attendanceFilter, setAttendanceFilter] = useState("all");
       const data = await response.json();
 
       if (!response.ok) {
-        alert(data.message);
+        showNotification(data.message,"error");
         return;
       }
 
@@ -123,7 +159,7 @@ const [attendanceFilter, setAttendanceFilter] = useState("all");
       setUser(data.user);
       setPage("home");
     } catch {
-      alert("Cannot connect to backend.");
+      showNotification("Cannot connect to backend.","error");
     }
   }
 
@@ -135,7 +171,7 @@ const [attendanceFilter, setAttendanceFilter] = useState("all");
 
   async function registerForEvent(eventId) {
   if (!user) {
-    alert("Please login first.");
+    showNotification("Please login first.","error");
     setPage("login");
     return;
   }
@@ -152,22 +188,29 @@ const [attendanceFilter, setAttendanceFilter] = useState("all");
       })
     });
 
-    const data = await response.json();
+  const data = await response.json();
 
-    alert(data.message);
+if (response.ok) {
 
-    if (response.ok) {
-      const myEventsResponse = await fetch(
-        `${API}/users/${user.id}/registrations`
-      );
+  showNotification(data.message);
 
-      const myEventsData = await myEventsResponse.json();
+  const myEventsResponse = await fetch(
+    `${API}/users/${user.id}/registrations`
+  );
 
-      setMyEvents(myEventsData);
+  const myEventsData = await myEventsResponse.json();
+
+  setMyEvents(myEventsData);
+
+} else {
+
+  showNotification(data.message, "error");
+
+
     }
 
   } catch {
-    alert("Cannot connect to backend.");
+    showNotification("Cannot connect to backend.","error");
   }
 }
 
@@ -183,7 +226,7 @@ const [attendanceFilter, setAttendanceFilter] = useState("all");
       setMyEvents(data);
       setPage("myEvents");
     } catch {
-      alert("Cannot load registrations.");
+      showNotification("Cannot load registrations.","error");
     }
   }
  const isRegisteredForEvent = (eventId) => {
@@ -214,7 +257,7 @@ const [attendanceFilter, setAttendanceFilter] = useState("all");
     setCertificates(data);
     setPage("certificates");
   } catch {
-    alert("Cannot load certificates.");
+    showNotification("Cannot load certificates.","error");
   }
 }
 
@@ -233,25 +276,40 @@ const [attendanceFilter, setAttendanceFilter] = useState("all");
 
       const data = await response.json();
 
-      if (response.ok) {
-        alert("Event created successfully!");
+if (response.ok) {
+  await getEvents();
 
-        setEvent({
-          name: "",
-          description: "",
-          date: "",
-          venue: "",
-          category: "Other",
-          certificateTemplate: "template1"
-        });
+  const newEventsResponse = await fetch(`${API}/events`);
+  const newEvents = await newEventsResponse.json();
 
-        getEvents();
-        setPage("events");
-      } else {
-        alert(data.message);
+  const createdEvent = newEvents
+    .slice()
+    .sort(
+      (a, b) =>
+        new Date(b.createdAt) - new Date(a.createdAt)
+    )[0];
+
+  if (createdEvent && createdEvent._id) {
+    const registrationLink =
+      `${window.location.origin}/?event=${createdEvent._id}`;
+
+    setCreatedEventLink(registrationLink);
+  }
+
+  setEvent({
+  name: "",
+  description: "",
+  capacity: 100,
+  date: "",
+  venue: "",
+  category: "Other",
+  certificateTemplate: "template1"
+});
+}else {
+        showNotification(data.message,"error");
       }
     } catch {
-      alert("Cannot connect to backend.");
+      showNotification("Cannot connect to backend.","error");
     }
   }
 
@@ -268,7 +326,7 @@ const [attendanceFilter, setAttendanceFilter] = useState("all");
       setAllRegistrations(data);
       setPage("attendance");
     } catch {
-      alert("Cannot load registrations.");
+      showNotification("Cannot load registrations.","error");
     }
   }
 
@@ -288,18 +346,18 @@ const [attendanceFilter, setAttendanceFilter] = useState("all");
       const data = await response.json();
 
       if (response.ok) {
-        alert("Attendance marked!");
+        showNotification("Attendance marked!");
         getRegistrations();
       } else {
-        alert(data.message);
+        showNotification(data.message,"error");
       }
     } catch {
-      alert("Cannot connect to backend.");
+      showNotification("Cannot connect to backend.","error");
     }
   }
   function exportAttendanceToExcel() {
   if (!selectedAttendanceEvent) {
-    alert("Please select an event first.");
+    showNotification("Please select an event first.","error");
     return;
   }
 
@@ -314,7 +372,7 @@ const [attendanceFilter, setAttendanceFilter] = useState("all");
   );
 
   if (!selectedEvent) {
-    alert("Event not found.");
+    showNotification("Event not found.","error");
     return;
   }
 
@@ -350,7 +408,7 @@ const [attendanceFilter, setAttendanceFilter] = useState("all");
 
       if (!response.ok) {
         const data = await response.json();
-        alert(data.message);
+        showNotification(data.message,"error");
         return;
       }
 
@@ -364,7 +422,7 @@ const [attendanceFilter, setAttendanceFilter] = useState("all");
 
       window.URL.revokeObjectURL(url);
     } catch {
-      alert("Cannot download certificate.");
+      showNotification("Cannot download certificate.","error");
     }
   }
 
@@ -383,7 +441,7 @@ const [attendanceFilter, setAttendanceFilter] = useState("all");
 
     setPage("users");
   } catch {
-    alert("Cannot load users.");
+    showNotification("Cannot load users.","error");
   }
 }
   async function changeRole(id, role) {
@@ -401,13 +459,15 @@ const [attendanceFilter, setAttendanceFilter] = useState("all");
       );
 
       const data = await response.json();
-      alert(data.message);
 
-      if (response.ok) {
-        getUsers();
-      }
+if (response.ok) {
+  showNotification(data.message);
+  getUsers();
+} else {
+  showNotification(data.message, "error");
+}
     } catch {
-      alert("Cannot update role.");
+      showNotification("Cannot update role.","error");
     }
   }
   async function changeCreateEventPermission(userId, createEvents) {
@@ -424,15 +484,18 @@ const [attendanceFilter, setAttendanceFilter] = useState("all");
 
     const data = await response.json();
 
-    if (!response.ok) {
-      alert(data.message || "Failed to update permission.");
-      return;
-    }
+   if (!response.ok) {
+  showNotification(
+    data.message || "Failed to update permission.",
+    "error"
+  );
+  return;
+}
 
-    alert("Create event permission updated.");
+    showNotification("Create event permission updated.");
     getUsers();
   } catch {
-    alert("Cannot update permission.");
+    showNotification("Cannot update permission.","error");
   }
 }
 async function changeAttendanceAccess(
@@ -458,20 +521,20 @@ async function changeAttendanceAccess(
     );
 
     const data = await response.json();
+if (!response.ok) {
+  showNotification(
+    data.message ||
+    "Failed to update attendance access.",
+    "error"
+  );
+  return;
+}
 
-    if (!response.ok) {
-      alert(
-        data.message ||
-        "Failed to update attendance access."
-      );
-      return;
-    }
-
-    alert(data.message);
-    getUsers();
+   showNotification(data.message);
+getUsers();
 
   } catch {
-    alert("Cannot update attendance access.");
+    showNotification("Cannot update attendance access.","error");
   }
 }
 
@@ -625,29 +688,168 @@ async function changeAttendanceAccess(
         {page === "home" && (
   <div className="dashboard">
 
-    {!user ? (
-      <div className="hero">
-        <h1>EVENTCERT</h1>
+   {!user ? (
+  <div className="home-page">
+
+    <section className="home-hero">
+
+      <div className="home-hero-content">
+
+        <span className="home-eyebrow">
+          COLLEGE EVENT MANAGEMENT
+        </span>
+
+        <h1>
+          Everything for your events,
+          <span> in one place.</span>
+        </h1>
+
+        <p>
+          Discover college events, register with ease,
+          track your participation and access your
+          certificates — all through EventCert.
+        </p>
+
+        <div className="home-hero-actions">
+
+          <button
+            className="home-primary-button"
+            onClick={() => {
+              getEvents();
+              setPage("events");
+            }}
+          >
+            Explore Events
+          </button>
+
+          <button
+            className="home-secondary-button"
+            onClick={() => setPage("register")}
+          >
+            Create Account
+          </button>
+
+        </div>
+
+      </div>
+
+      <div className="home-hero-visual">
+
+        <div className="home-visual-card">
+
+          <div className="home-visual-header">
+            <span>EVENTCERT</span>
+            <span className="home-visual-status">
+              LIVE
+            </span>
+          </div>
+
+          <div className="home-visual-event">
+
+            <span className="home-visual-label">
+              UPCOMING EVENT
+            </span>
+
+            <h3>
+              Discover. Participate.
+              Achieve.
+            </h3>
+
+            <p>
+              Your next college experience
+              starts here.
+            </p>
+
+          </div>
+
+          <div className="home-visual-details">
+
+            <div>
+              <strong>Events</strong>
+              <span>Discover</span>
+            </div>
+
+            <div>
+              <strong>Registration</strong>
+              <span>Easy &amp; Fast</span>
+            </div>
+
+            <div>
+              <strong>Certificates</strong>
+              <span>Digital Access</span>
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </section>
+
+    <section className="home-features">
+
+      <div className="home-section-heading">
+        <span>WHY EVENTCERT</span>
 
         <h2>
-          Event Registration and Certificate
-          Management System
+          A simpler way to manage
+          college events.
         </h2>
 
         <p>
-          Register for events, track attendance and
-          download your certificates.
+          From registration to certification,
+          EventCert keeps everything organized.
         </p>
-
-        <button onClick={() => setPage("events")}>
-          Explore Events
-        </button>
-
-        <button onClick={() => setPage("login")}>
-          Login
-        </button>
       </div>
-    ) : (
+
+      <div className="home-feature-grid">
+
+        <div className="home-feature-card">
+          <span className="home-feature-number">
+            01
+          </span>
+
+          <h3>Discover Events</h3>
+
+          <p>
+            Browse upcoming workshops, seminars,
+            competitions and other college events.
+          </p>
+        </div>
+
+        <div className="home-feature-card">
+          <span className="home-feature-number">
+            02
+          </span>
+
+          <h3>Register Easily</h3>
+
+          <p>
+            Register for events and keep track of
+            everything you have signed up for.
+          </p>
+        </div>
+
+        <div className="home-feature-card">
+          <span className="home-feature-number">
+            03
+          </span>
+
+          <h3>Get Certified</h3>
+
+          <p>
+            Once your attendance is confirmed,
+            access your participation certificates.
+          </p>
+        </div>
+
+      </div>
+
+    </section>
+
+  </div>
+) : (
       <>
        <div className="dashboard-welcome">
 
@@ -776,107 +978,238 @@ async function changeAttendanceAccess(
     </div>
 
   </div>
+
 )}
-        {page === "login" && (
-          <div className="card">
-            <h2>Login</h2>
+{notification && (
+  <div className={`eventcert-notification ${notification.type}`}>
+    <span className="notification-check">
+      {notification.type === "error" ? "!" : "✓"}
+    </span>
 
-            <input
-              type="email"
-              placeholder="Email"
-              value={login.email}
-              onChange={(e) =>
-                setLogin({
-                  ...login,
-                  email: e.target.value
-                })
-              }
-            />
+    <span>{notification.message}</span>
+  </div>
+  )}
+       {page === "login" && (
+<div className="auth-page">
 
-            <input
-              type="password"
-              placeholder="Password"
-              value={login.password}
-              onChange={(e) =>
-                setLogin({
-                  ...login,
-                  password: e.target.value
-                })
-              }
-            />
+  <div className="auth-visual-panel">
+    <div className="auth-brand">
+  <img
+  src={eventCertLogo}
+  alt="EventCert"
+  className="auth-logo"
+/>
+</div>
 
-            <button onClick={handleLogin}>
-              Login
-            </button>
-          </div>
-        )}
+    <div className="auth-visual-content">
+      <h2>Everything for your events, in one place.</h2>
+      <p>
+        Discover events, manage registrations and access
+        your certificates with ease.
+      </p>
+    </div>
+  </div>
 
-        {page === "register" && (
-          <div className="card">
-            <h2>Create Account</h2>
+  <div className="auth-card">
 
-            <input
-              placeholder="Name"
-              value={register.name}
-              onChange={(e) =>
-                setRegister({
-                  ...register,
-                  name: e.target.value
-                })
-              }
-            />
+      <div className="auth-header">
+        <h1>EventCert</h1>
+        <h2>Welcome back</h2>
+        <p>Sign in to continue to your account.</p>
+      </div>
 
-            <input
-              placeholder="Register Number"
-              value={register.registerNumber}
-              onChange={(e) =>
-                setRegister({
-                  ...register,
-                  registerNumber: e.target.value
-                })
-              }
-            />
+      <div className="auth-form">
 
-            <input
-              placeholder="Department"
-              value={register.department}
-              onChange={(e) =>
-                setRegister({
-                  ...register,
-                  department: e.target.value
-                })
-              }
-            />
+        <div className="auth-field">
+          <label>Email</label>
+          <input
+            type="email"
+            placeholder="Enter your email"
+            value={login.email}
+            onChange={(e) =>
+              setLogin({
+                ...login,
+                email: e.target.value
+              })
+            }
+          />
+        </div>
 
-            <input
-              type="email"
-              placeholder="Email"
-              value={register.email}
-              onChange={(e) =>
-                setRegister({
-                  ...register,
-                  email: e.target.value
-                })
-              }
-            />
+        <div className="auth-field">
+          <label>Password</label>
+          <input
+            type="password"
+            placeholder="Enter your password"
+            value={login.password}
+            onChange={(e) =>
+              setLogin({
+                ...login,
+                password: e.target.value
+              })
+            }
+          />
+        </div>
 
-            <input
-              type="password"
-              placeholder="Password"
-              value={register.password}
-              onChange={(e) =>
-                setRegister({
-                  ...register,
-                  password: e.target.value
-                })
-              }
-            />
+        <button
+          className="auth-submit-button"
+          onClick={handleLogin}
+        >
+          Login
+        </button>
 
-            <button onClick={handleRegister}>
-              Register
-            </button>
-          </div>
-        )}
+      </div>
+
+      <div className="auth-footer">
+        <p>
+          Don't have an account?{" "}
+          <button
+            type="button"
+            onClick={() => setPage("register")}
+          >
+            Create one
+          </button>
+        </p>
+      </div>
+
+    </div>
+
+  </div>
+)}
+
+{page === "register" && (
+ <div className="auth-page register-auth-page">
+
+    <div className="auth-visual-panel">
+
+      <div className="auth-brand">
+        <img
+          src={eventCertLogo}
+          alt="EventCert"
+          className="auth-logo"
+        />
+      </div>
+
+      <div className="auth-visual-content">
+        <h2>
+          Everything for your events,
+          in one place.
+        </h2>
+
+        <p>
+          Discover events, participate with ease,
+          and get certified for your achievements.
+        </p>
+      </div>
+
+    </div>
+
+    <div className="auth-card register-card">
+
+      <div className="auth-header">
+        <h1>EventCert</h1>
+        <h2>Create your account</h2>
+        <p>Join EventCert to discover and manage college events.</p>
+      </div>
+
+      <div className="auth-form">
+
+        <div className="auth-field">
+          <label>Name</label>
+          <input
+            placeholder="Enter your full name"
+            value={register.name}
+            onChange={(e) =>
+              setRegister({
+                ...register,
+                name: e.target.value
+              })
+            }
+          />
+        </div>
+
+        <div className="auth-field">
+          <label>Register Number</label>
+          <input
+            placeholder="Enter your register number"
+            value={register.registerNumber}
+            onChange={(e) =>
+              setRegister({
+                ...register,
+                registerNumber: e.target.value
+              })
+            }
+          />
+        </div>
+
+        <div className="auth-field">
+          <label>Department</label>
+          <input
+            placeholder="Enter your department"
+            value={register.department}
+            onChange={(e) =>
+              setRegister({
+                ...register,
+                department: e.target.value
+              })
+            }
+          />
+        </div>
+
+        <div className="auth-field">
+          <label>Email</label>
+          <input
+            type="email"
+            placeholder="Enter your email"
+            value={register.email}
+            onChange={(e) =>
+              setRegister({
+                ...register,
+                email: e.target.value
+              })
+            }
+          />
+        </div>
+
+        <div className="auth-field">
+          <label>Password</label>
+          <input
+            type="password"
+            placeholder="Create a password"
+            value={register.password}
+            onChange={(e) =>
+              setRegister({
+                ...register,
+                password: e.target.value
+              })
+            }
+          />
+        </div>
+
+        <button
+          className="auth-submit-button"
+          onClick={handleRegister}
+        >
+          Create Account
+        </button>
+
+      </div>
+
+      <div className="auth-footer">
+        <p>
+          Already have an account?{" "}
+          <button
+            type="button"
+            onClick={() => setPage("login")}
+          >
+            Login
+          </button>
+        </p>
+      </div>
+
+    </div>
+
+  </div>
+)}
 
         {page === "events" && (
   <div className="events-page">
@@ -1172,11 +1505,26 @@ async function changeAttendanceAccess(
 )}
 
         {page === "createEvent" && (
-          <div className="card">
-            <h2>Create Event</h2>
+  <div className="create-event-page">
+
+    <div className="create-event-card">
+
+      <div className="create-event-header">
+        <h2>Create New Event</h2>
+        <p>Add the details for your event</p>
+      </div>
+
+      <div className="create-event-content">
+
+        {/* LEFT SIDE — EVENT DETAILS */}
+        <div className="create-event-details">
+
+          <div className="create-event-field full-width">
+            <label>Event Name</label>
 
             <input
-              placeholder="Event Name"
+              type="text"
+              placeholder="Enter event name"
               value={event.name}
               onChange={(e) =>
                 setEvent({
@@ -1185,43 +1533,53 @@ async function changeAttendanceAccess(
                 })
               }
             />
+          </div>
 
-            <textarea
-              placeholder="Event Description"
-              value={event.description}
-              onChange={(e) =>
-                setEvent({
-                  ...event,
-                  description: e.target.value
-                })
-              }
-            />
-            <input
-  type="number"
-  min="1"
-  placeholder="Maximum participants"
-  value={event.capacity}
-  onChange={(e) =>
-    setEvent({
-      ...event,
-      capacity: Number(e.target.value)
-    })
-  }
-/>
+
+          <div className="create-event-row">
+
+            <div className="create-event-field">
+              <label>Event Date</label>
+
+              <input
+                type="date"
+                value={event.date}
+                onChange={(e) =>
+                  setEvent({
+                    ...event,
+                    date: e.target.value
+                  })
+                }
+              />
+            </div>
+
+
+            <div className="create-event-field">
+              <label>Maximum Participants</label>
+
+              <input
+                type="number"
+                min="1"
+                placeholder="100"
+                value={event.capacity}
+                onChange={(e) =>
+                  setEvent({
+                    ...event,
+                    capacity: Number(e.target.value)
+                  })
+                }
+              />
+            </div>
+
+          </div>
+
+
+          <div className="create-event-field full-width">
+            <label>Venue</label>
 
             <input
-              type="date"
-              value={event.date}
-              onChange={(e) =>
-                setEvent({
-                  ...event,
-                  date: e.target.value
-                })
-              }
-            />
-
-            <input
-              placeholder="Venue"
+              type="text"
+              placeholder="Enter event venue"
               value={event.venue}
               onChange={(e) =>
                 setEvent({
@@ -1230,62 +1588,150 @@ async function changeAttendanceAccess(
                 })
               }
             />
-            <select
-  value={event.category}
-  onChange={(e) =>
-    setEvent({
-      ...event,
-      category: e.target.value
-    })
-  }
->
-  <option value="Workshop">
-    Workshop
-  </option>
+          </div>
 
-  <option value="Hackathon">
-    Hackathon
-  </option>
 
-  <option value="Seminar">
-    Seminar
-  </option>
+          <div className="create-event-row">
 
-  <option value="Competition">
-    Competition
-  </option>
+            <div className="create-event-field">
+              <label>Event Category</label>
 
-  <option value="Other">
-    Other
-  </option>
-</select>
-            <select
-              value={event.certificateTemplate}
+              <select
+                value={event.category}
+                onChange={(e) =>
+                  setEvent({
+                    ...event,
+                    category: e.target.value
+                  })
+                }
+              >
+                <option value="Workshop">
+                  Workshop
+                </option>
+
+                <option value="Hackathon">
+                  Hackathon
+                </option>
+
+                <option value="Seminar">
+                  Seminar
+                </option>
+
+                <option value="Competition">
+                  Competition
+                </option>
+
+                <option value="Other">
+                  Other
+                </option>
+              </select>
+            </div>
+
+
+            <div className="create-event-field">
+              <label>Certificate Template</label>
+
+              <select
+                value={event.certificateTemplate}
+                onChange={(e) =>
+                  setEvent({
+                    ...event,
+                    certificateTemplate: e.target.value
+                  })
+                }
+              >
+                <option value="template1">
+                  Template 1
+                </option>
+
+                <option value="template2">
+                  Template 2
+                </option>
+
+                <option value="template3">
+                  Template 3
+                </option>
+              </select>
+            </div>
+
+          </div>
+
+        </div>
+
+
+        {/* RIGHT SIDE — EVENT DESCRIPTION */}
+        <div className="create-event-description">
+
+          <div className="create-event-field description-field">
+            <label>About Event</label>
+
+            <textarea
+              placeholder="Tell students about this event..."
+              value={event.description}
               onChange={(e) =>
                 setEvent({
                   ...event,
-                  certificateTemplate: e.target.value
+                  description: e.target.value
                 })
               }
-            >
-              <option value="template1">
-                Certificate Template 1
-              </option>
-
-              <option value="template2">
-                Certificate Template 2
-              </option>
-
-              <option value="template3">
-                Certificate Template 3
-              </option>
-            </select>
-
-            <button onClick={createEvent}>
-              Create Event
-            </button>
+            />
           </div>
-        )}
+
+        </div>
+
+      </div>
+
+
+      {/* ACTIONS */}
+      <div className="create-event-actions">
+
+        <button
+          type="button"
+          className="create-event-cancel"
+          onClick={() => setPage("dashboard")}
+        >
+          Cancel
+        </button>
+
+        <button
+          type="button"
+          className="create-event-submit"
+          onClick={createEvent}
+        >
+          Create Event
+        </button>
+
+      </div>
+      {createdEventLink && (
+  <div className="registration-link-box">
+    <div className="registration-link-content">
+      <strong>Event created successfully</strong>
+      <p>Share this link with students to register for the event.</p>
+
+      <div className="registration-link-row">
+        <input
+          type="text"
+          value={createdEventLink}
+          readOnly
+        />
+
+        <button
+          type="button"
+          onClick={() => {
+            navigator.clipboard.writeText(createdEventLink);
+           showNotification("Registration link copied!");
+          }}
+        >
+          Copy Link
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+    </div>
+
+  </div>
+)}
 
        {page === "attendance" && (
  <div className="attendance-page">
@@ -1548,104 +1994,238 @@ async function changeAttendanceAccess(
     })()}
   </div>
 )}
-        {page === "users" && (
-          <div>
-            <h2>User Management</h2>
+       {page === "users" && (
+  <div className="users-page">
 
-            {users.map((item) => (
-              <div className="event" key={item._id}>
+    <div className="users-header">
+      <div>
+        <h2>User Management</h2>
+        <p>
+          Manage user roles, permissions and attendance access.
+        </p>
+      </div>
+    </div>
+
+    <div className="users-filters">
+
+      <input
+        type="text"
+        placeholder="Search users..."
+        value={userSearch}
+        onChange={(e) =>
+          setUserSearch(e.target.value)
+        }
+      />
+
+      <select
+        value={userRoleFilter}
+        onChange={(e) =>
+          setUserRoleFilter(e.target.value)
+        }
+      >
+        <option value="all">All Roles</option>
+        <option value="participant">Participants</option>
+        <option value="coordinator">Coordinators</option>
+        <option value="admin">Admins</option>
+      </select>
+
+    </div>
+
+    <div className="users-list">
+
+      {users
+        .filter((item) => {
+          const search = userSearch.toLowerCase();
+
+          const matchesSearch =
+            item.name.toLowerCase().includes(search) ||
+            item.email.toLowerCase().includes(search) ||
+            item.registerNumber
+              .toLowerCase()
+              .includes(search);
+
+          const matchesRole =
+            userRoleFilter === "all" ||
+            item.role === userRoleFilter;
+
+          return matchesSearch && matchesRole;
+        })
+        .map((item) => (
+
+          <div
+            className="user-card"
+            key={item._id}
+          >
+
+            <div className="user-main">
+
+              <div className="user-avatar">
+                {item.name.charAt(0).toUpperCase()}
+              </div>
+
+              <div className="user-info">
+
                 <h3>{item.name}</h3>
 
                 <p>{item.email}</p>
 
-                <p>
-                  Register Number:{" "}
+                <span>
                   {item.registerNumber}
-                </p>
+                </span>
 
-                <p>
-                  Current Role: <b>{item.role}</b>
-                </p>
+              </div>
 
-                <select
-                  value={item.role}
-                  onChange={(e) =>
-                    changeRole(
-                      item._id,
-                      e.target.value
-                    )
-                  }
-                >
-                  <option value="participant">
-                    Participant
-                  </option>
+            </div>
 
-                  <option value="coordinator">
-                    Coordinator
-                  </option>
+            <div className="user-role">
+              <span
+                className={`role-badge ${item.role}`}
+              >
+                {item.role}
+              </span>
+            </div>
 
-                  <option value="admin">
-                    Admin
-                  </option>
-                </select>
-               
-{item.role === "coordinator" && (
-  <button
-    onClick={() =>
-      changeCreateEventPermission(
-        item._id,
-        !item.permissions?.createEvents
-      )
-    }
-  >
-    {item.permissions?.createEvents
-      ? "Revoke Event Creation"
-      : "Allow Event Creation"}
-  </button>
+            <div className="user-actions">
 
-)}
-{item.role === "coordinator" && (
-  <div>
-    <p>Attendance Access:</p>
+              <select
+                value={item.role}
+                onChange={(e) =>
+                  changeRole(
+                    item._id,
+                    e.target.value
+                  )
+                }
+              >
+                <option value="participant">
+                  Participant
+                </option>
 
-    {events.map((event) => {
-      const hasAccess =
-        item.attendanceEvents?.some(
-          (id) => id === event._id
-        );
+                <option value="coordinator">
+                  Coordinator
+                </option>
 
-      return (
-        <label
-          key={event._id}
-          style={{
-            display: "block",
-            marginBottom: "5px"
-          }}
-        >
-          <input
-            type="checkbox"
-            checked={hasAccess}
-            onChange={(e) =>
-              changeAttendanceAccess(
-                item._id,
-                event._id,
-                e.target.checked
-              )
-            }
-          />
+                <option value="admin">
+                  Admin
+                </option>
+              </select>
 
-          {" "}{event.name}
-        </label>
-      );
-    })}
+            </div>
+
+            {item.role === "coordinator" && (
+              <div className="coordinator-controls">
+
+                <div className="permission-section">
+
+                  <h4>Coordinator Permissions</h4>
+
+                  <button
+                    className={
+                      item.permissions?.createEvents
+                        ? "permission-button allowed"
+                        : "permission-button"
+                    }
+                    onClick={() =>
+                      changeCreateEventPermission(
+                        item._id,
+                        !item.permissions?.createEvents
+                      )
+                    }
+                  >
+                    {item.permissions?.createEvents
+                      ? "Event Creation Allowed"
+                      : "Allow Event Creation"}
+                  </button>
+
+                </div>
+
+                <div className="attendance-section">
+
+                  <h4>Attendance Access</h4>
+
+                  <select
+                    className="attendance-event-select"
+                    defaultValue=""
+                    onChange={(e) => {
+                      const eventId =
+                        e.target.value;
+
+                      if (!eventId) return;
+
+                      const hasAccess =
+                        item.attendanceEvents?.some(
+                          (id) => id === eventId
+                        );
+
+                      changeAttendanceAccess(
+                        item._id,
+                        eventId,
+                        !hasAccess
+                      );
+
+                      e.target.value = "";
+                    }}
+                  >
+
+                    <option value="">
+                      Select an event
+                    </option>
+
+                    {events.map((event) => {
+
+                      const hasAccess =
+                        item.attendanceEvents?.some(
+                          (id) => id === event._id
+                        );
+
+                      return (
+                        <option
+                          key={event._id}
+                          value={event._id}
+                        >
+                          {hasAccess
+                            ? `✓ ${event.name} — Access granted`
+                            : event.name}
+                        </option>
+                      );
+                    })}
+
+                  </select>
+
+                  <div className="attendance-access-list">
+
+                    {events
+                      .filter((event) =>
+                        item.attendanceEvents?.some(
+                          (id) => id === event._id
+                        )
+                      )
+                      .map((event) => (
+
+                        <span
+                          key={event._id}
+                          className="attendance-access-tag"
+                        >
+                          {event.name}
+                        </span>
+
+                      ))}
+
+                  </div>
+
+                </div>
+
+              </div>
+            )}
+
+          </div>
+
+        ))}
+
+    </div>
+
   </div>
 )}
-              </div>
-            ))}
-          </div>
-        )}
-
-      </main>
+</main>
 
       <footer>
         EVENTCERT © 2026
