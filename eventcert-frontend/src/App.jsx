@@ -1381,7 +1381,7 @@ getUsers();
             {myEvents.length === 0 ? (
               <p>No event registrations found.</p>
             ) : (
-              myEvents.map((item) => (
+             myEvents.filter((item) => item.event).map((item) => (
   <div className="my-event-card" key={item._id}>
 
     <div className="my-event-info">
@@ -1470,7 +1470,7 @@ getUsers();
 ) : (
   <div className="my-certificates-list">
 
-    {certificates.map((item) => (
+   {certificates.filter((item) => item.event).map((item) => (
         <div className="my-certificate-card" key={item._id}>
           <div className="my-certificate-info">
           <h3>{item.event.name}</h3>
